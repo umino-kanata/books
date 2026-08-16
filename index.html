@@ -10,82 +10,61 @@
 <body>
   <div class="app-shell">
     <header class="topbar">
-      <div>
-        <div class="eyebrow">MY COLLECTION</div>
-        <h1 id="pageTitle">本・雑誌</h1>
-      </div>
+      <div><div class="eyebrow">MY COLLECTION</div><h1 id="pageTitle">本</h1></div>
       <button id="backupBtn" class="icon-btn" aria-label="バックアップ">⇩</button>
     </header>
 
     <main>
       <section id="homeView" class="view active">
         <div class="media-grid">
-          <button class="media-card active" data-media="book"><span>📚</span><strong>本・雑誌</strong></button>
-          <button class="media-card" data-media="cd"><span>💿</span><strong>CD</strong></button>
-          <button class="media-card" data-media="dvd"><span>📀</span><strong>DVD</strong></button>
-          <button class="media-card" data-media="bluray"><span>🔵</span><strong>Blu-ray</strong></button>
-          <button class="media-card" data-media="vhs"><span>📼</span><strong>VHS</strong></button>
-          <button class="media-card" data-media="digital"><span>☁️</span><strong>デジタル</strong></button>
+          <button class="media-card active" data-shelf="book"><span>📚</span><strong>本</strong></button>
+          <button class="media-card developing" data-shelf="cd"><span>💿</span><strong>CD</strong><small>開発中</small></button>
+          <button class="media-card developing" data-shelf="video"><span>🎬</span><strong>映像</strong><small>開発中</small></button>
+          <button class="media-card developing" data-shelf="custom"><span>＋</span><strong>マイコレクション</strong><small>開発中</small></button>
         </div>
 
         <div class="search-panel">
           <input id="searchInput" type="search" placeholder="タイトル・著者を検索" />
-          <select id="categoryFilter"><option value="">すべてのカテゴリー</option></select>
+          <div class="filter-row">
+            <select id="categoryFilter"><option value="">すべてのカテゴリー</option></select>
+            <button id="manageCategoryBtn" class="small-btn" type="button">編集</button>
+          </div>
           <div class="chips">
             <button id="unreadFilter" class="chip">未読</button>
             <button id="favoriteFilter" class="chip">♥ お気に入り</button>
           </div>
         </div>
 
-        <div class="section-head">
-          <h2>作品一覧</h2>
-          <span id="resultCount">0件</span>
-        </div>
+        <div class="section-head"><h2>作品一覧</h2><span id="resultCount">0件</span></div>
         <div id="itemList" class="item-list"></div>
       </section>
 
       <section id="formView" class="view">
-        <div class="form-head">
-          <button id="backBtn" class="text-btn">← 戻る</button>
-          <h2 id="formTitle">作品を登録</h2>
-        </div>
+        <div class="form-head"><button id="backBtn" class="text-btn">← 戻る</button><h2 id="formTitle">作品を登録</h2></div>
         <form id="itemForm">
           <input type="hidden" id="itemId" />
 
-          <label>メディア
-            <select id="mediaType">
-              <option value="book">本・雑誌</option>
-              <option value="cd">CD</option>
-              <option value="dvd">DVD</option>
-              <option value="bluray">Blu-ray</option>
-              <option value="vhs">VHS</option>
-              <option value="digital">デジタル</option>
+          <label>種類
+            <select id="bookType">
+              <option value="書籍">書籍</option>
+              <option value="雑誌">雑誌</option>
+              <option value="コミック">コミック</option>
             </select>
           </label>
 
-          <label>タイトル <span class="required">必須</span>
-            <input id="title" required />
-          </label>
+          <label>タイトル <span class="required">必須</span><input id="title" required /></label>
 
-          <label>著者・アーティスト・出演者
-            <input id="creator" placeholder="複数は「、」区切りでもOK" />
-          </label>
+          <div class="field-label-row"><span>著者・関係者</span><button type="button" id="addContributorBtn" class="small-btn">＋ 行追加</button></div>
+          <div id="contributors"></div>
 
           <div class="two-col">
-            <label>シリーズ
-              <input id="series" />
-            </label>
-            <label>巻数・巻名
-              <input id="volume" />
-            </label>
+            <label>シリーズ<input id="series" /></label>
+            <label>巻数・巻名<input id="volume" /></label>
           </div>
 
           <label>カテゴリー
             <div id="categoryChecks" class="check-grid"></div>
-            <div class="inline-add">
-              <input id="newCategory" placeholder="カテゴリー追加" />
-              <button type="button" id="addCategoryBtn">追加</button>
-            </div>
+            <div class="inline-add"><input id="newCategory" placeholder="カテゴリー追加" /><button type="button" id="addCategoryBtn">追加</button></div>
           </label>
 
           <div class="toggle-row">
@@ -95,7 +74,10 @@
 
           <fieldset>
             <legend>所有</legend>
-            <label class="toggle-line"><input id="owned" type="checkbox" checked /> 所有している</label>
+            <div class="toggle-row ownership-row">
+              <label class="toggle-line"><input id="owned" type="checkbox" checked /> 所有している</label>
+              <label id="loanToggleWrap" class="toggle-line"><input id="loaned" type="checkbox" /> 貸出中</label>
+            </div>
             <div id="ownedFields">
               <label>形態
                 <div class="check-grid compact">
@@ -106,84 +88,49 @@
                   <label><input type="checkbox" name="format" value="その他" />その他</label>
                 </div>
               </label>
-              <label>保管場所
-                <input id="location" placeholder="例：自宅・本棚① / 会社・ロッカー" />
-              </label>
-              <label>貸出状態
-                <select id="loanStatus">
-                  <option value="">手元にある</option>
-                  <option value="貸出中">貸出中</option>
-                </select>
-              </label>
-              <label id="loanToWrap" class="hidden">貸した相手
-                <input id="loanTo" />
-              </label>
+              <div class="filter-row location-row">
+                <label class="grow">保管場所<select id="location"><option value="">未設定</option></select></label>
+                <button id="manageLocationBtn" class="small-btn align-bottom" type="button">場所を登録</button>
+              </div>
+              <label id="loanMemoWrap" class="hidden">貸出先・メモ<input id="loanMemo" placeholder="例：○○さん／返却期限など" /></label>
             </div>
             <div id="notOwnedFields" class="hidden">
-              <label>状態
-                <select id="notOwnedReason">
-                  <option value="未購入">未購入</option>
-                  <option value="購入予定">購入予定</option>
-                  <option value="予約済み">予約済み</option>
-                  <option value="借りている">借りている</option>
-                  <option value="売却">売却</option>
-                  <option value="贈呈">贈呈</option>
-                  <option value="譲渡">譲渡</option>
-                  <option value="廃棄">廃棄</option>
-                  <option value="紛失">紛失</option>
-                  <option value="その他">その他</option>
-                </select>
-              </label>
+              <label>状態<select id="notOwnedReason"><option value="未購入">未購入</option><option value="購入予定">購入予定</option><option value="予約済み">予約済み</option><option value="借りている">借りている</option><option value="売却">売却</option><option value="贈呈">贈呈</option><option value="譲渡">譲渡</option><option value="廃棄">廃棄</option><option value="紛失">紛失</option><option value="その他">その他</option></select></label>
             </div>
           </fieldset>
 
-          <details>
-            <summary>詳細情報（任意）</summary>
+          <details open>
+            <summary>書籍情報（任意）</summary>
             <div class="details-body">
-              <label>ISBN / JAN
-                <input id="isbn" />
+              <label>ISBN
+                <div class="isbn-row"><input id="isbn" inputmode="numeric" placeholder="978..." /><button type="button" id="isbnLookupBtn" class="small-btn">ISBN検索</button><button type="button" id="scanBtn" class="small-btn">📷 読み取る</button></div>
+                <small id="isbnMessage" class="hint"></small>
               </label>
-              <label>出版社・発売元
-                <input id="publisher" />
-              </label>
-              <label>レーベル
-                <input id="labelName" />
-              </label>
-              <label>利用サービス（Kobo等）
-                <input id="service" />
-              </label>
-              <label>感想・書評
-                <textarea id="review" rows="5"></textarea>
-              </label>
-              <label>メモ
-                <textarea id="memo" rows="3"></textarea>
-              </label>
+              <label>出版社<input id="publisher" /></label>
+              <label>レーベル<input id="labelName" /></label>
+              <label>発行・発売日<input id="publishedDate" /></label>
+              <label>感想・書評<textarea id="review" rows="5"></textarea></label>
+              <label>メモ<textarea id="memo" rows="3"></textarea></label>
             </div>
           </details>
 
-          <div class="form-actions">
-            <button type="submit" class="primary">保存</button>
-            <button type="button" id="deleteBtn" class="danger hidden">削除</button>
-          </div>
+          <div class="form-actions"><button type="submit" class="primary">保存</button><button type="button" id="deleteBtn" class="danger hidden">削除</button></div>
         </form>
       </section>
     </main>
 
-    <button id="addBtn" class="fab" aria-label="登録">＋</button>
+    <button id="addBtn" class="fab" aria-label="登録"><span>＋</span> 登録</button>
 
-    <dialog id="backupDialog">
-      <form method="dialog" class="dialog-card">
-        <h3>バックアップ</h3>
-        <p>端末に保存し、Google Driveなどにも保管してください。</p>
-        <button type="button" id="exportBtn" class="primary">バックアップ作成</button>
-        <label class="file-btn">バックアップから復元
-          <input id="importInput" type="file" accept="application/json" />
-        </label>
-        <button>閉じる</button>
-      </form>
-    </dialog>
+    <dialog id="categoryDialog"><div class="dialog-card"><h3>カテゴリー管理</h3><p>名前変更・並び替え・非表示ができます。</p><div id="categoryManager" class="manager-list"></div><div class="dialog-actions"><button type="button" id="closeCategoryDialog">閉じる</button></div></div></dialog>
+
+    <dialog id="locationDialog"><div class="dialog-card"><h3>保管場所</h3><div class="inline-add"><input id="newLocation" placeholder="例：自宅・本棚①" /><button type="button" id="addLocationBtn">追加</button></div><div id="locationManager" class="manager-list"></div><div class="dialog-actions"><button type="button" id="closeLocationDialog">閉じる</button></div></div></dialog>
+
+    <dialog id="scannerDialog"><div class="dialog-card scanner-card"><h3>ISBNバーコードを読み取る</h3><p>978 または 979 で始まるバーコードを読み取ります。</p><div id="reader"></div><button type="button" id="closeScannerBtn">閉じる</button></div></dialog>
+
+    <dialog id="backupDialog"><div class="dialog-card"><h3>バックアップ</h3><p>端末に保存し、Google Driveなどにも保管してください。</p><button type="button" id="exportBtn" class="primary">バックアップ作成</button><label class="file-btn">バックアップから復元<input id="importInput" type="file" accept="application/json" /></label><button type="button" id="closeBackupBtn">閉じる</button></div></dialog>
   </div>
 
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
