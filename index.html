@@ -128,7 +128,7 @@
 
     <dialog id="locationDialog"><div class="dialog-card"><h3>保管場所</h3><div class="inline-add"><input id="newLocation" placeholder="例：自宅・本棚①" /><button type="button" id="addLocationBtn">追加</button></div><div id="locationManager" class="manager-list"></div><div class="dialog-actions"><button type="button" id="closeLocationDialog">閉じる</button></div></div></dialog>
 
-    <dialog id="scannerDialog"><div class="dialog-card scanner-card"><h3>ISBNバーコードを読み取る</h3><p>978 または 979 で始まるバーコードを読み取ります。</p><div id="reader"></div><button type="button" id="closeScannerBtn">閉じる</button></div></dialog>
+    <dialog id="scannerDialog"><div class="dialog-card scanner-card"><h3>ISBNバーコードを読み取る</h3><p id="scannerStatus">背面カメラを起動しています…</p><div class="scan-frame-wrap"><div id="reader"></div><div class="scan-guide" aria-hidden="true"></div></div><button type="button" id="closeScannerBtn">閉じる</button></div></dialog>
 
     <dialog id="backupDialog"><div class="dialog-card"><h3>バックアップ</h3><p>端末に保存し、Google Driveなどにも保管してください。</p><button type="button" id="exportBtn" class="primary">バックアップ作成</button><label class="file-btn">バックアップから復元<input id="importInput" type="file" accept="application/json" /></label><button type="button" id="closeBackupBtn">閉じる</button></div></dialog>
   </div>

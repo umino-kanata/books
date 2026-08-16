@@ -116,13 +116,56 @@ async function lookupISBN(){
 }
 function setIsbnMessage(msg,error=false){$('isbnMessage').textContent=msg;$('isbnMessage').classList.toggle('error',error);}
 
-function startScanner(){
-  if(typeof Html5QrcodeScanner==='undefined'){alert('バーコード読み取り機能を読み込めませんでした。ISBNを手入力してください。');return;}
-  $('scannerDialog').showModal(); $('reader').innerHTML='';
-  scanner=new Html5QrcodeScanner('reader',{fps:10,qrbox:{width:280,height:120},rememberLastUsedCamera:true,supportedScanTypes:[Html5QrcodeScanType.SCAN_TYPE_CAMERA,Html5QrcodeScanType.SCAN_TYPE_FILE]},false);
-  scanner.render(async decoded=>{const digits=String(decoded).replace(/\D/g,'');if((digits.length===13)&&(digits.startsWith('978')||digits.startsWith('979'))){$('isbn').value=digits;await stopScanner();lookupISBN();}else setIsbnMessage('価格コードではなく、978/979で始まるISBNバーコードを読み取ってください。',true);},()=>{});
+async function startScanner(){
+  if(typeof Html5Qrcode==='undefined'){alert('バーコード読み取り機能を読み込めませんでした。ISBNを手入力してください。');return;}
+  $('scannerDialog').showModal();
+  $('scannerStatus').textContent='背面カメラを起動しています…';
+  $('scannerStatus').classList.remove('error');
+  $('reader').innerHTML='';
+  scanner=new Html5Qrcode('reader');
+  const onSuccess=async decoded=>{
+    const digits=String(decoded).replace(/\D/g,'');
+    if(digits.length===13&&(digits.startsWith('978')||digits.startsWith('979'))){
+      $('isbn').value=digits;
+      $('scannerStatus').textContent='ISBNを読み取りました。';
+      await stopScanner();
+      lookupISBN();
+    }else{
+      $('scannerStatus').textContent='978 または 979 で始まるISBNバーコードを枠内に入れてください。';
+    }
+  };
+  const config={fps:12,qrbox:{width:280,height:120},aspectRatio:1.777778,formatsToSupport:[Html5QrcodeSupportedFormats.EAN_13]};
+  try{
+    await scanner.start({facingMode:{exact:'environment'}},config,onSuccess,()=>{});
+    $('scannerStatus').textContent='本の裏表紙にあるISBNバーコードを枠内に入れてください。';
+  }catch(e1){
+    try{
+      await scanner.start({facingMode:'environment'},config,onSuccess,()=>{});
+      $('scannerStatus').textContent='本の裏表紙にあるISBNバーコードを枠内に入れてください。';
+    }catch(e2){
+      try{
+        const cams=await Html5Qrcode.getCameras();
+        const rear=cams.find(c=>/back|rear|environment|背面|外側/i.test(c.label)) || cams[cams.length-1];
+        if(!rear) throw e2;
+        await scanner.start(rear.id,config,onSuccess,()=>{});
+        $('scannerStatus').textContent='本の裏表紙にあるISBNバーコードを枠内に入れてください。';
+      }catch(e3){
+        $('scannerStatus').textContent='背面カメラを起動できませんでした。カメラの使用許可を確認してください。';
+        $('scannerStatus').classList.add('error');
+        try{await scanner.clear();}catch{}
+        scanner=null;
+      }
+    }
+  }
 }
-async function stopScanner(){if(scanner){try{await scanner.clear();}catch{}scanner=null;}$('scannerDialog').close();}
+async function stopScanner(){
+  if(scanner){
+    try{if(scanner.isScanning)await scanner.stop();}catch{}
+    try{await scanner.clear();}catch{}
+    scanner=null;
+  }
+  if($('scannerDialog').open)$('scannerDialog').close();
+}
 
 $('itemForm').addEventListener('submit',e=>{e.preventDefault();const obj=collectForm();const idx=items.findIndex(x=>x.id===obj.id);if(idx>=0)items[idx]={...items[idx],...obj};else items.push({...obj,createdAt:new Date().toISOString()});save();showView('home');render();});
 $('deleteBtn').addEventListener('click',()=>{const id=$('itemId').value;if(id&&confirm('この登録を削除しますか？')){items=items.filter(x=>x.id!==id);save();showView('home');render();}});
