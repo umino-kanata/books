@@ -1,7 +1,7 @@
 const STORAGE_KEY='my_collection_items_v1';
 const CATEGORY_KEY='my_collection_categories_v1';
 const LOCATION_KEY='my_collection_locations_v1';
-const FORMAT_VERSION=3;
+const FORMAT_VERSION=4;
 
 const defaultCategoryNames=['小説','歴史','漫画','写真集','雑誌','元気を出したい','ブログに使えそう'];
 const $=id=>document.getElementById(id);
@@ -101,18 +101,112 @@ function renderLocationManager(){
   $('locationManager').querySelectorAll('.manager-row').forEach(row=>{const idx=Number(row.dataset.index);row.querySelector('.loc-name').addEventListener('change',e=>{const old=locations[idx],n=e.target.value.trim();if(!n)return;locations[idx]=n;items=items.map(i=>i.location===old?{...i,location:n}:i);save();renderLocations(n);});row.querySelector('.delete-loc').addEventListener('click',()=>{const old=locations[idx];if(confirm(`「${old}」を削除しますか？`)){locations.splice(idx,1);save();renderLocationManager();renderLocations();}});});
 }
 
-async function lookupISBN(){
-  const isbn=$('isbn').value.replace(/[^0-9Xx]/g,''); $('isbn').value=isbn; if(!(isbn.length===10||isbn.length===13)){setIsbnMessage('ISBNを10桁または13桁で入力してください。',true);return;}
-  setIsbnMessage('書籍情報を検索しています…');
+function isbn13to10(isbn13){
+  const s=String(isbn13||'').replace(/[^0-9]/g,'');
+  if(s.length!==13||!s.startsWith('978')) return '';
+  const core=s.slice(3,12);
+  let sum=0;
+  for(let i=0;i<9;i++) sum+=(10-i)*Number(core[i]);
+  const check=(11-(sum%11))%11;
+  return core+(check===10?'X':String(check));
+}
+function isbnCandidates(isbn){
+  const clean=String(isbn||'').replace(/[^0-9Xx]/g,'').toUpperCase();
+  const out=[clean];
+  const ten=isbn13to10(clean);
+  if(ten&&!out.includes(ten)) out.push(ten);
+  return out;
+}
+async function lookupGoogleBooks(isbn){
   try{
-    let info=null;
-    try{const r=await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${encodeURIComponent(isbn)}&maxResults=1`);const d=await r.json();if(d.items?.length){const v=d.items[0].volumeInfo||{};info={title:v.title||'',authors:v.authors||[],publisher:v.publisher||'',publishedDate:v.publishedDate||''};}}catch{}
-    if(!info){const r=await fetch(`https://openlibrary.org/api/books?bibkeys=ISBN:${encodeURIComponent(isbn)}&jscmd=data&format=json`);const d=await r.json();const b=d[`ISBN:${isbn}`];if(b)info={title:b.title||'',authors:(b.authors||[]).map(a=>a.name),publisher:(b.publishers||[])[0]?.name||'',publishedDate:b.publish_date||''};}
-    if(!info){setIsbnMessage('書籍情報が見つかりませんでした。手入力できます。',true);return;}
-    if(info.title&&!$('title').value.trim())$('title').value=info.title; if(info.publisher&&!$('publisher').value.trim())$('publisher').value=info.publisher;if(info.publishedDate&&!$('publishedDate').value.trim())$('publishedDate').value=info.publishedDate;
-    if(info.authors?.length){setContributors(info.authors.map(name=>({role:'著者',name})));}
-    setIsbnMessage('書籍情報を取得しました。内容を確認して保存してください。');
-  }catch(e){setIsbnMessage('書籍情報を取得できませんでした。手入力できます。',true);}
+    const r=await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${encodeURIComponent(isbn)}&maxResults=5`);
+    if(!r.ok) return null;
+    const d=await r.json();
+    const item=(d.items||[])[0];
+    if(!item) return null;
+    const v=item.volumeInfo||{};
+    return {source:'Google Books',title:v.title||'',authors:v.authors||[],publisher:v.publisher||'',publishedDate:v.publishedDate||''};
+  }catch{return null;}
+}
+async function lookupOpenLibrary(isbn){
+  try{
+    const r=await fetch(`https://openlibrary.org/api/books?bibkeys=ISBN:${encodeURIComponent(isbn)}&jscmd=data&format=json`);
+    if(!r.ok) return null;
+    const d=await r.json();
+    const b=d[`ISBN:${isbn}`];
+    if(!b) return null;
+    return {source:'Open Library',title:b.title||'',authors:(b.authors||[]).map(a=>a.name),publisher:(b.publishers||[])[0]?.name||'',publishedDate:b.publish_date||''};
+  }catch{return null;}
+}
+async function lookupNDL(isbn){
+  try{
+    const r=await fetch(`https://ndlsearch.ndl.go.jp/api/opensearch?isbn=${encodeURIComponent(isbn)}`);
+    if(!r.ok) return null;
+    const text=await r.text();
+    const xml=new DOMParser().parseFromString(text,'application/xml');
+    if(xml.querySelector('parsererror')) return null;
+    const item=xml.getElementsByTagName('item')[0];
+    if(!item) return null;
+    const first=(...names)=>{
+      for(const name of names){
+        const el=item.getElementsByTagName(name)[0];
+        if(el&&el.textContent?.trim()) return el.textContent.trim();
+      }
+      return '';
+    };
+    const all=(...names)=>{
+      const vals=[];
+      for(const name of names){
+        [...item.getElementsByTagName(name)].forEach(el=>{const t=el.textContent?.trim();if(t&&!vals.includes(t)) vals.push(t);});
+      }
+      return vals;
+    };
+    const title=first('dc:title','title');
+    if(!title) return null;
+    return {
+      source:'国立国会図書館サーチ',
+      title,
+      authors:all('dc:creator','dcndl:creatorTranscription'),
+      publisher:first('dc:publisher','dcndl:publicationPlace'),
+      publishedDate:first('dc:date','dcterms:issued','pubDate')
+    };
+  }catch{return null;}
+}
+async function lookupISBN(){
+  const isbn=$('isbn').value.replace(/[^0-9Xx]/g,'').toUpperCase();
+  $('isbn').value=isbn;
+  if(!(isbn.length===10||isbn.length===13)){
+    setIsbnMessage('ISBNを10桁または13桁で入力してください。',true);return;
+  }
+  const candidates=isbnCandidates(isbn);
+  setIsbnMessage('書籍情報を検索しています…');
+  let info=null;
+  const attempts=[];
+  for(const candidate of candidates){
+    attempts.push(`Google Books（${candidate}）`);
+    info=await lookupGoogleBooks(candidate); if(info) break;
+  }
+  if(!info){
+    for(const candidate of candidates){
+      attempts.push(`Open Library（${candidate}）`);
+      info=await lookupOpenLibrary(candidate); if(info) break;
+    }
+  }
+  if(!info){
+    for(const candidate of candidates){
+      attempts.push(`国立国会図書館サーチ（${candidate}）`);
+      info=await lookupNDL(candidate); if(info) break;
+    }
+  }
+  if(!info){
+    setIsbnMessage(`書籍情報が見つかりませんでした。ISBNは読み取れています。手入力できます。`,true);
+    return;
+  }
+  if(info.title&&!$('title').value.trim()) $('title').value=info.title;
+  if(info.publisher&&!$('publisher').value.trim()) $('publisher').value=info.publisher;
+  if(info.publishedDate&&!$('publishedDate').value.trim()) $('publishedDate').value=info.publishedDate;
+  if(info.authors?.length) setContributors(info.authors.map(name=>({role:'著者',name})));
+  setIsbnMessage(`書籍情報を取得しました（${info.source}）。内容を確認して保存してください。`);
 }
 function setIsbnMessage(msg,error=false){$('isbnMessage').textContent=msg;$('isbnMessage').classList.toggle('error',error);}
 
