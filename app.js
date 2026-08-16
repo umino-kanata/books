@@ -1,7 +1,7 @@
 const STORAGE_KEY='my_collection_items_v1';
 const CATEGORY_KEY='my_collection_categories_v1';
 const LOCATION_KEY='my_collection_locations_v1';
-const FORMAT_VERSION=2;
+const FORMAT_VERSION=3;
 
 const defaultCategoryNames=['小説','歴史','漫画','写真集','雑誌','元気を出したい','ブログに使えそう'];
 const $=id=>document.getElementById(id);
@@ -56,7 +56,7 @@ function render(){
   document.querySelectorAll('.item').forEach(el=>el.addEventListener('click',()=>openForm(el.dataset.id)));
 }
 
-function showView(name){$('homeView').classList.toggle('active',name==='home');$('formView').classList.toggle('active',name==='form');$('addBtn').classList.toggle('hidden',name!=='home');}
+function showView(name){$('homeView').classList.toggle('active',name==='home');$('formView').classList.toggle('active',name==='form');$('homeActions').classList.toggle('hidden',name!=='home');}
 function contributorRow(data={role:'著者',name:''}){
   const row=document.createElement('div'); row.className='contributor-row';
   row.innerHTML=`<select class="contributor-role"><option>著者</option><option>訳者</option><option>写真</option><option>編者</option><option>監修</option><option>その他</option></select><input class="contributor-name" placeholder="名前" /><button type="button" class="remove-row" aria-label="行を削除">×</button>`;
@@ -126,7 +126,7 @@ async function stopScanner(){if(scanner){try{await scanner.clear();}catch{}scann
 
 $('itemForm').addEventListener('submit',e=>{e.preventDefault();const obj=collectForm();const idx=items.findIndex(x=>x.id===obj.id);if(idx>=0)items[idx]={...items[idx],...obj};else items.push({...obj,createdAt:new Date().toISOString()});save();showView('home');render();});
 $('deleteBtn').addEventListener('click',()=>{const id=$('itemId').value;if(id&&confirm('この登録を削除しますか？')){items=items.filter(x=>x.id!==id);save();showView('home');render();}});
-$('addBtn').addEventListener('click',()=>openForm()); $('backBtn').addEventListener('click',()=>{showView('home');render();}); $('addContributorBtn').addEventListener('click',()=>contributorRow({role:'著者',name:''}));
+$('addBtn').addEventListener('click',()=>openForm()); $('quickScanBtn').addEventListener('click',()=>{openForm();setTimeout(startScanner,0);}); $('backBtn').addEventListener('click',()=>{showView('home');render();}); $('addContributorBtn').addEventListener('click',()=>contributorRow({role:'著者',name:''}));
 $('owned').addEventListener('change',toggleOwned);$('loaned').addEventListener('change',toggleLoan);$('searchInput').addEventListener('input',render);$('categoryFilter').addEventListener('change',render);
 $('unreadFilter').addEventListener('click',()=>{unreadOnly=!unreadOnly;$('unreadFilter').classList.toggle('active',unreadOnly);render();});$('favoriteFilter').addEventListener('click',()=>{favoriteOnly=!favoriteOnly;$('favoriteFilter').classList.toggle('active',favoriteOnly);render();});
 

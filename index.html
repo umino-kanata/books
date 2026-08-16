@@ -119,7 +119,10 @@
       </section>
     </main>
 
-    <button id="addBtn" class="fab" aria-label="登録"><span>＋</span> 登録</button>
+    <div id="homeActions" class="fab-group">
+      <button id="quickScanBtn" class="fab secondary" aria-label="ISBN読取"><span>📷</span> ISBN読取</button>
+      <button id="addBtn" class="fab" aria-label="登録"><span>＋</span> 登録</button>
+    </div>
 
     <dialog id="categoryDialog"><div class="dialog-card"><h3>カテゴリー管理</h3><p>名前変更・並び替え・非表示ができます。</p><div id="categoryManager" class="manager-list"></div><div class="dialog-actions"><button type="button" id="closeCategoryDialog">閉じる</button></div></div></dialog>
 
