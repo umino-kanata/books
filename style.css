@@ -2,3 +2,6 @@
 
 /* Ver.2.2 scanner UI */
 .scan-frame-wrap{position:relative;width:100%;background:#111;border-radius:14px;overflow:hidden;min-height:260px}.scan-frame-wrap #reader{width:100%;min-height:260px;background:#111}.scan-frame-wrap video{width:100%!important;height:auto!important;display:block}.scan-guide{position:absolute;left:8%;right:8%;top:50%;height:110px;transform:translateY(-50%);border:3px solid rgba(255,255,255,.95);border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.28);pointer-events:none}.scanner-card #scannerStatus{font-size:14px;color:var(--muted);line-height:1.5}.scanner-card #scannerStatus.error{color:#a00}.scanner-card #reader>div:first-child img,.scanner-card #reader__dashboard_section,.scanner-card #reader__dashboard{display:none!important}.scanner-card>button{margin-top:12px;background:#eee;color:#222;width:100%}
+
+/* Ver.2.4 */
+.imprint-entry{margin:-2px 0 14px}.imprint-entry .small-btn{width:100%;padding:12px}.imprint-preview{display:block;max-width:100%;max-height:58vh;object-fit:contain;margin:10px auto;border-radius:12px;background:#f0f0ee}.split-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.split-actions button{width:100%}@media(max-width:420px){.split-actions{grid-template-columns:1fr}.owned-volume-badge{font-size:11px}}

@@ -62,6 +62,11 @@
             <label>巻数・巻名<input id="volume" /></label>
           </div>
 
+          <label id="ownedVolumesWrap" class="hidden">所有巻
+            <input id="ownedVolumes" placeholder="例：1-11,13" />
+            <small class="hint">コミックを作品単位で登録する場合に、持っている巻をまとめて入力できます。</small>
+          </label>
+
           <label>カテゴリー
             <div id="categoryChecks" class="check-grid"></div>
             <div class="inline-add"><input id="newCategory" placeholder="カテゴリー追加" /><button type="button" id="addCategoryBtn">追加</button></div>
@@ -106,6 +111,11 @@
                 <div class="isbn-row"><input id="isbn" inputmode="numeric" placeholder="978..." /><button type="button" id="isbnLookupBtn" class="small-btn">ISBN検索</button><button type="button" id="scanBtn" class="small-btn">📷 読み取る</button></div>
                 <small id="isbnMessage" class="hint"></small>
               </label>
+              <div class="imprint-entry">
+                <button type="button" id="imprintBtn" class="small-btn">📷 ISBNなし・奥付を撮る</button>
+                <input id="imprintInput" type="file" accept="image/*" capture="environment" hidden />
+                <small class="hint">ISBNがない本は奥付を撮影できます。画像は保存しません。</small>
+              </div>
               <label>出版社<input id="publisher" /></label>
               <label>レーベル<input id="labelName" /></label>
               <label>発行・発売日<input id="publishedDate" /></label>
@@ -129,6 +139,10 @@
     <dialog id="locationDialog"><div class="dialog-card"><h3>保管場所</h3><div class="inline-add"><input id="newLocation" placeholder="例：自宅・本棚①" /><button type="button" id="addLocationBtn">追加</button></div><div id="locationManager" class="manager-list"></div><div class="dialog-actions"><button type="button" id="closeLocationDialog">閉じる</button></div></div></dialog>
 
     <dialog id="scannerDialog"><div class="dialog-card scanner-card"><h3>ISBNバーコードを読み取る</h3><p id="scannerStatus">背面カメラを起動しています…</p><div class="scan-frame-wrap"><div id="reader"></div><div class="scan-guide" aria-hidden="true"></div></div><button type="button" id="closeScannerBtn">閉じる</button></div></dialog>
+
+    <dialog id="saveDoneDialog"><div class="dialog-card"><h3>保存しました</h3><p>続けて本を登録できます。</p><div class="dialog-actions split-actions"><button type="button" id="saveDoneHomeBtn">一覧へ</button><button type="button" id="saveDoneScanBtn" class="primary">📷 次のISBNを読む</button></div></div></dialog>
+
+    <dialog id="imprintDialog"><div class="dialog-card"><h3>奥付写真（β）</h3><p>この版では、撮影した奥付を画面で確認しながら手入力できます。写真データは保存しません。</p><img id="imprintPreview" alt="奥付写真プレビュー" class="imprint-preview" /><div class="dialog-actions split-actions"><button type="button" id="closeImprintBtn">閉じる</button><button type="button" id="useImprintBtn" class="primary">入力画面へ戻る</button></div></div></dialog>
 
     <dialog id="backupDialog"><div class="dialog-card"><h3>バックアップ</h3><p>端末に保存し、Google Driveなどにも保管してください。</p><button type="button" id="exportBtn" class="primary">バックアップ作成</button><label class="file-btn">バックアップから復元<input id="importInput" type="file" accept="application/json" /></label><button type="button" id="closeBackupBtn">閉じる</button></div></dialog>
   </div>
